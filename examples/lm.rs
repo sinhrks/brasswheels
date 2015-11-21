@@ -1,5 +1,9 @@
 extern crate csv;
+extern crate nalgebra;
+
 extern crate brasswheels;
+
+use nalgebra::{DMat, DVec};
 
 use brasswheels::io::read_csv_f64;
 use brasswheels::lm::LinearModel;
@@ -46,8 +50,22 @@ fn main() {
     let mut reader = csv::Reader::from_string(data).has_headers(true);
     let dx = read_csv_f64(&mut reader);
 
+    let mut xvalues: Vec<f64> = vec![];
+    let mut yvalues: Vec<f64> = vec![];
+    for (i, &v) in dx.as_vec().iter().enumerate() {
+        if i < dx.nrows() {
+            yvalues.push(v);
+        } else {
+            xvalues.push(v);
+        }
+    }
+    let dy = DVec::from_slice(dx.nrows(), &yvalues);
+    let dx = DMat::from_col_vec(dx.nrows(), dx.ncols() - 1, &xvalues);
+
     // Linear regression
     let mut lm = LinearModel::new();
-    lm.fit(&dx);
-    println!("Results: {:?}", &lm.coefs);
+    lm.fit(&dx, &dy);
+    println!("Coefs: {:?}", &lm.coefs);
+    println!("Predicted:\n{:?}", &lm.predict(&dx));
+    println!("Actual:\n{:?}", &dy);
 }
