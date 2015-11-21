@@ -8,12 +8,12 @@ use num::Float;
 use std::f64;
 use std::ops::Index;
 
-use mathfunc::{euc_dist};
+use super::mathfunc::{euc_dist};
 
 pub enum ClusterDistance {
-    Single,                 // Minimum or single-linkage clustering
-    Complete,               // Maximum or complete-linkage clustering
-    Average,                // Mean or average linkage clustering, or UPGMA
+    Single,                 // Minimum clustering
+    Complete,               // Maximum clustering
+    Average,                // Mean clustering
 }
 
 pub struct HClust {
@@ -72,7 +72,8 @@ impl HClust {
         }
         // take elements from Vec and move ownership to the new instance
         let new = Cluster::from_clusters(self.clusters.swap_remove(tmp_j),
-                                         self.clusters.swap_remove(tmp_i));
+                                         self.clusters.swap_remove(tmp_i),
+                                         current_dist);
 
         new_clusters.push(new);
         self.clusters = new_clusters;
@@ -126,6 +127,7 @@ impl HClust {
 
 struct Cluster {
     nodes: Vec<usize>,
+    distance: f64,
     children: Vec<Cluster>
 }
 
@@ -134,23 +136,61 @@ impl Cluster {
     fn from_nodes(nodes: Vec<usize>) -> Cluster {
         Cluster {
             nodes: nodes,
+            distance: 0.,
             children: vec![]
         }
     }
 
     /// create a cluster merging 2 clusters
-    fn from_clusters(left: Cluster, right: Cluster) -> Cluster {
-        let mut id = vec![];
+    fn from_clusters(left: Cluster, right: Cluster, distance: f64) -> Cluster {
+        let mut nodes = vec![];
         for i in &left.nodes {
-            id.push(*i);
+            nodes.push(*i);
         }
         for j in &right.nodes {
-            id.push(*j);
+            nodes.push(*j);
         }
         Cluster {
-            nodes: id,
+            nodes: nodes,
+            distance: distance,
             children: vec![left, right]
         }
     }
 }
 
+#[cfg(test)]
+mod tests {
+    extern crate csv;
+    use super::{HClust, ClusterDistance};
+    use super::super::io::read_csv_f64;
+
+    #[test]
+    fn test_hclust() {
+        let data = "名前,算数,理科,国語,英語,社会
+    田中,89,90,67,46,50
+    佐藤,57,70,80,85,90
+    鈴木,80,90,35,40,50
+    本田,40,60,50,45,55
+    川端,78,85,45,55,60
+    吉野,55,65,80,75,85
+    斉藤,90,85,88,92,95";
+
+        let mut reader = csv::Reader::from_string(data).has_headers(true);
+        let dx = read_csv_f64(&mut reader);
+
+        // Minimum clustering
+        let mut hclust = HClust::new(ClusterDistance::Single);
+        hclust.fit(&dx);
+        assert_eq!(hclust.clusters[0].distance, 54.31390245600108);
+
+        // Maximum clustering
+        let mut hclust = HClust::new(ClusterDistance::Complete);
+        hclust.fit(&dx);
+        assert_eq!(hclust.clusters[0].distance, 91.53141537199127);
+
+        // Mean clustering
+        let mut hclust = HClust::new(ClusterDistance::Average);
+        hclust.fit(&dx);
+        assert_eq!(hclust.clusters[0].distance, 69.92295649225116);
+    }
+}

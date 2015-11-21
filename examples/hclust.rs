@@ -22,15 +22,15 @@ fn main() {
     // http://nalgebra.org/doc/nalgebra/struct.DMat.html
     let dx = read_csv_f64(&mut reader);
 
-    println!("最近隣法");
+    println!("Minimum clustering");
     let mut hclust = HClust::new(ClusterDistance::Single);
     hclust.fit(&dx);
 
-    println!("最遠隣法");
+    println!("Maximum clustering");
     let mut hclust = HClust::new(ClusterDistance::Complete);
     hclust.fit(&dx);
 
-    println!("群平均法");
+    println!("Mean clustering");
     let mut hclust = HClust::new(ClusterDistance::Average);
     hclust.fit(&dx);
 }
