@@ -4,7 +4,7 @@ extern crate num;
 use nalgebra::{DVec, DMat, Mat4, Mean, ColSlice, Transpose};
 use std::vec::Vec;
 
-use mathfunc::{sum_square};
+use super::mathfunc::{sum_square};
 
 pub struct PCA {
     center: bool,               // whether to center or not

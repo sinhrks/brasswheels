@@ -7,7 +7,7 @@ use rand::distributions::{IndependentSample, Range};
 use std::collections::HashMap;
 use std::f64;
 
-use mathfunc::{euc_dist};
+use super::mathfunc::{euc_dist};
 
 pub struct KMeans {
     pub nclusters: usize,                   // クラスタ数

@@ -4,7 +4,7 @@ extern crate num;
 use nalgebra::{DMat, DVec, Inv, Mean, ColSlice};
 use std::vec::Vec;
 
-use mathfunc::{sum_square};
+use super::mathfunc::{sum_square};
 
 pub struct LinearModel {
     // 重回帰モデル
