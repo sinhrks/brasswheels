@@ -3,7 +3,7 @@ extern crate num;
 extern crate rand;
 
 use nalgebra::{DVec, DMat, RowSlice, Iterable};
-use rand::distributions::{IndependentSample, Range};
+use rand::sample;
 use std::collections::HashMap;
 use std::f64;
 
@@ -26,13 +26,18 @@ impl KMeans {
     }
 
     pub fn fit(&mut self, data: &DMat<f64>) {
-        let nfeatures = data.ncols();
-
-        let range: Range<usize> = Range::new(0, nfeatures - 1);
-
         let mut rng = rand::thread_rng();
-        // 各データをランダムに分類
-        let mut cindexer = DVec::from_fn(data.nrows(), |_| range.ind_sample(&mut rng));
+
+        // データからクラスタの初期値をサンプリング (非復元抽出)
+        let inits: Vec<usize> = sample(&mut rng, 0..data.nrows(), self.nclusters);
+        for (i, rownum) in inits.into_iter().enumerate() {
+            let mut c = Cluster::new(data.ncols());
+            let row = data.row_slice(rownum, 0, data.ncols());
+            c.add_element(row);
+            self.centroids.insert(i, c);
+        }
+
+        let mut cindexer = self.predict(data);
 
         // 最大 max_iter 回繰り返し
         for _ in 0..self.max_iter {
@@ -51,12 +56,13 @@ impl KMeans {
         }
     }
 
+    /// 各レコードが所属するクラスタのベクトルを返す
     pub fn predict(&self, data: &DMat<f64>) -> DVec<usize> {
         return DVec::from_fn(data.nrows(),
                             |x| self.get_nearest(&data.row_slice(x, 0, data.ncols())));
     }
 
-    /// レコードにもっとも近い 中心点をもつクラスタのラベルを返す
+    /// レコードにもっとも近い中心点をもつクラスタのラベルを返す
     fn get_nearest(&self, values: &DVec<f64>) -> usize {
 
         let mut tmp_i = 0;
@@ -72,7 +78,7 @@ impl KMeans {
         return tmp_i;
     }
 
-    /// データとクラスタのラベルをもとに、クラスタの中心点を更新する
+    /// クラスタの中心点を更新する
     fn update_centroids(&mut self, data: &DMat<f64>, cindexer: &DVec<usize>) {
         self.centroids.clear();
 
