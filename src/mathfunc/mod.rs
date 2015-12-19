@@ -29,6 +29,25 @@ pub fn dmat_max<T: Float>(data: &DMat<T>) -> DVec<T> {
                          |i| dvec_max(&data.col_slice(i, 0, data.nrows())));
 }
 
+
+/// Copy DVec
+pub fn dvec_copy<T: Copy>(data: &DVec<T>) -> DVec<T> {
+    let mut values: Vec<T> = vec![];
+    for i in data.iter() {
+        values.push(*i);
+    }
+    return DVec::from_slice(data.len(), &values);
+}
+
+/// Copy DMat
+pub fn dmat_copy<T: Copy>(data: &DMat<T>) -> DMat<T> {
+    let mut values: Vec<T> = vec![];
+    for i in data.as_vec().iter() {
+        values.push(*i);
+    }
+    return DMat::from_col_vec(data.nrows(), data.ncols(), &values);
+}
+
 /// Sum of squares
 pub fn sum_square<T: Num + Zero + Sub + Copy>(vec1: &DVec<T>, vec2: &DVec<T>, m1: T, m2: T) -> T {
     let mut val: T = Zero::zero();
@@ -48,6 +67,16 @@ pub fn euc_dist<T: Float + Signed>(vec1: &DVec<T>, vec2: &DVec<T>) -> T {
     return val.sqrt();
 }
 
+/// Inner Product
+pub fn inner_product<T: Float + Signed>(vec1: &DVec<T>, vec2: &DVec<T>) -> T {
+    let mut val: T = Zero::zero();
+    assert!(vec1.len() == vec2.len());
+    for (v1, v2) in vec1.iter().zip(vec2.iter()) {
+        val = val + *v1 * *v2;
+    }
+    return val;
+}
+
 /// Round DMat elements to specified decimals
 pub fn round(data: &DMat<f64>, decimals: usize) -> DMat<f64> {
     let nrows = data.nrows();
@@ -59,11 +88,12 @@ pub fn round(data: &DMat<f64>, decimals: usize) -> DMat<f64> {
     return DMat::from_col_vec(nrows, ncols, &vals);
 }
 
+
 #[cfg(test)]
 mod tests {
     use nalgebra::{DVec, DMat};
     use super::{dvec_min, dvec_max, dmat_min, dmat_max,
-                sum_square, euc_dist, round};
+                sum_square, euc_dist, inner_product, round};
 
     #[test]
     fn test_dvec_minmax_float() {
@@ -113,6 +143,18 @@ mod tests {
         let v2: DVec<f64> = DVec::from_slice(3, &vec![5., 4., 2.]);
 
         assert_eq!(4.5825756949558398, euc_dist(&v1, &v2));
+    }
+
+    fn test_inner_product() {
+        let v1: DVec<f64> = DVec::from_slice(3, &vec![3., 4., 5.]);
+        let v2: DVec<f64> = DVec::from_slice(3, &vec![7., 8., 2.]);
+
+        assert_eq!(63.0, inner_product(&v1, &v2));
+
+        let v1: DVec<f64> = DVec::from_slice(3, &vec![1., 2., 3.]);
+        let v2: DVec<f64> = DVec::from_slice(3, &vec![5., 4., 2.]);
+
+        assert_eq!(19.0, inner_product(&v1, &v2));
     }
 
     #[test]
