@@ -11,3 +11,4 @@ pub mod hclust;
 pub mod kmeans;
 pub mod lm;
 pub mod pca;
+pub mod svm;
